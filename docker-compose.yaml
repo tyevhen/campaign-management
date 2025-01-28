@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    networks:
+      - app-network
+
+  api:
+    build:
+      context: ./api
+    environment:
+      API_PORT: ${API_PORT}
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    networks:
+      - app-network
+    command: |
+      sh -c "
+        npm run prisma:generate && \
+        npm run prisma:migrate && \
+        npm run build && \
+        npm run start
+      "
+
+  client:
+    build:
+      context: ./client
+    environment:
+      CLIENT_PORT: ${CLIENT_PORT}
+    ports:
+      - "${CLIENT_PORT}:${CLIENT_PORT}"
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Campaign {
+  id              String            @id @default(uuid()) @db.Uuid
+  title           String
+  landingPageUrl  String
+  isRunning       Boolean
+  campaignPayouts CampaignPayout[]
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime?         @updatedAt
+
+  @@map("campaign")
+}
+
+
+model Payout {
+  id              String            @id @default(uuid()) @db.Uuid
+  country         String
+  campaignPayouts CampaignPayout[]
+  createdAt       DateTime          @default(now())
+
+  @@unique([country])
+  @@map("payout")
+}
+
+model CampaignPayout {
+  id          String     @id @default(uuid()) @db.Uuid
+  campaignId  String     @db.Uuid
+  payoutId    String     @db.Uuid
+  amount      Decimal    @default(0.00)
+
+  campaign    Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  payout      Payout     @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime?  @updatedAt
+
+  @@unique([campaignId, payoutId])
+  @@map("campaign_payout")
+}
